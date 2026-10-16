@@ -10,6 +10,8 @@ import {
 } from './stats'
 import type { Task, View } from './stats'
 import { createImporter } from './history'
+import { dashboardSvg } from './dashboard'
+import { C, KIND_COLOR } from './theme'
 import type { ImportRange, ImportResult } from './history'
 
 const PANE = 'payback'
@@ -23,14 +25,6 @@ const sourceView = atom({ plugin: 'payback', key: 'source' } as const, 'all' as 
 let isFromSdk = false
 let isTestSession = false
 
-const C = {
-  gold: '#F2C46D', hair: '#262B33', muted: '#7D8590', text: '#E6EDF3',
-  green: '#3DD68C', amber: '#E3B341', dark: '#0D1117',
-}
-const KIND_COLOR: Record<Kind, string> = {
-  coding: '#58A6FF', devops: '#9DA5FF', emails: '#BC8CFF', images: '#F778BA', documents: '#56D4DD', research: '#FFA657',
-  questions: '#C9D1D9', other: '#7D8590',
-}
 const TYPED_ORIGINS = new Set(['composer', 'sdk', 'bridge'])
 
 type $ = EngineInterface
@@ -460,7 +454,7 @@ function heading(c: Ctx, key: string, width: number, title: string) {
 /** A label, a bar of coloured cells for `value` against `max`, and the numbers on the right. */
 function barRow(c: Ctx, key: string, width: number, label: string, color: string, value: number, max: number, right: string, hasBar: boolean) {
   const { Box } = c.ui
-  const labelW = Math.min(16, Math.max(8, Math.floor(width * 0.32)))
+  const labelW = width >= 56 ? 21 : Math.min(16, Math.max(8, Math.floor(width * 0.32)))
   const rightW = Math.min(len(right), Math.max(0, width - labelW))
   const barW = width - labelW - rightW - 2
   const fill = value > 0 ? Math.max(1, Math.round((value / Math.max(1, max)) * barW)) : 0
@@ -574,6 +568,9 @@ const EMPTY: Record<Tab, string> = {
 }
 
 const plural = (x: number, one: string, many = `${one}s`) => `${fmtInt(x)} ${x === 1 ? one : many}`
+
+/** Columns from which the desktop draws the body as a picture: below it the picture would shrink too far to read. */
+const WIDE = 120
 
 type ImportActions = { importNow: () => void; cancel: () => void; close: () => void }
 type Who = { source: Source; you: number; sdk: number; hasSdk: boolean; set: (s: Source) => void }
@@ -696,6 +693,14 @@ function drawPane(ui: Els, isTerminal: boolean, v: View, s: Settings, width: num
     return <Box key="report" flexDirection="column" width={W}>{out}</Box>
   }
 
+  // A wide desktop pane draws everything below as one picture; the terminal and narrow panes keep the text layout below.
+  if (!isTerminal && W >= WIDE && 'Svg' in ui) {
+    const { source, alt } = dashboardSvg(v, s)
+    const { Svg } = ui
+    out.push(<Box key="gap-dashboard" height={1} />, <Svg key="dashboard" source={source} alt={alt} />)
+    return <Box key="report" flexDirection="column" width={W}>{out}</Box>
+  }
+
   // Tiles: three, then two, then one per row as the pane narrows.
   const minutes = minutesSaved(d, s)
   const hours = fmtHours(minutes)
@@ -743,7 +748,7 @@ function drawPane(ui: Els, isTerminal: boolean, v: View, s: Settings, width: num
   )
   const modelCard = card(c, 'card-models', leftW, 'Models and tokens', inner => {
     const wide = inner >= 44
-    const colW = 7
+    const colW = inner >= 56 ? 9 : 7
     const cols = wide ? ['Tasks', 'In', 'Out', 'Cached'] : ['Tasks', 'Out']
     const nameW = inner - cols.length * colW
     const row = (key: string, name: string, vals: string[], color = C.text) => (
@@ -773,16 +778,24 @@ function drawPane(ui: Els, isTerminal: boolean, v: View, s: Settings, width: num
   const hasCode = (d.tasks?.coding ?? 0) > 0 || Object.keys(d.n ?? {}).some(k => !k.startsWith('judge'))
   const codeCard = card(c, 'card-code', rightW, 'Code', inner => {
     const rows: RenderChildren[] = []
-    const join = (pairs: [number, string, string?][]) => pairs.filter(([x]) => x > 0).map(([x, one, many]) => plural(x, one, many)).join(' · ')
     if (n('linesAdded') + n('linesRemoved') > 0 || n('files') > 0)
       rows.push(kv(c, 'code-lines', inner, 'Lines', [[`+${fmtInt(n('linesAdded'))}`, C.green], ['  '], [`−${fmtInt(n('linesRemoved'))}`, C.muted], [`  ·  ${plural(n('files'), 'file')}`, C.muted]]))
     const langs = Object.entries(d.langs ?? {}).sort((a, b) => b[1] - a[1])
     const langTotal = langs.reduce((a, [, x]) => a + x, 0)
     if (langTotal > 0) rows.push(kv(c, 'code-langs', inner, 'Languages', [[langs.slice(0, 3).map(([l, x]) => `${l} ${Math.round((x / langTotal) * 100)}%`).join(' · ')]]))
-    const git = join([[n('commits'), 'commit'], [n('pushes'), 'push', 'pushes'], [n('merges'), 'merge'], [n('rebases'), 'rebase'], [n('branches'), 'branch', 'branches']])
-    if (git) rows.push(kv(c, 'code-git', inner, 'Git', [[git]]))
-    const github = join([[n('prsOpened'), 'PR opened', 'PRs opened'], [n('prsMerged'), 'PR merged', 'PRs merged'], [n('issuesOpened'), 'issue opened', 'issues opened'], [n('issuesClosed'), 'issue closed', 'issues closed']])
-    if (github) rows.push(kv(c, 'code-github', inner, 'GitHub', [[github]]))
+    const items = (pairs: [number, string, string?][]) => pairs.filter(([x]) => x > 0).map(([x, one, many]) => plural(x, one, many))
+    const wrapped = (key: string, label: string, parts: string[]) => {
+      const room = Math.max(10, inner - (inner >= 36 ? 11 : 9))
+      const lines: string[] = []
+      for (const part of parts) {
+        const last = lines[lines.length - 1]
+        if (last !== undefined && last.length + 3 + part.length <= room) lines[lines.length - 1] = `${last} · ${part}`
+        else lines.push(part)
+      }
+      lines.forEach((text, i) => rows.push(kv(c, `${key}-${i}`, inner, i === 0 ? label : '', [[text]])))
+    }
+    wrapped('code-git', 'Git', items([[n('commits'), 'commit'], [n('pushes'), 'push', 'pushes'], [n('merges'), 'merge'], [n('rebases'), 'rebase'], [n('branches'), 'branch', 'branches']]))
+    wrapped('code-github', 'GitHub', items([[n('prsOpened'), 'PR opened', 'PRs opened'], [n('prsMerged'), 'PR merged', 'PRs merged'], [n('issuesOpened'), 'issue opened', 'issues opened'], [n('issuesClosed'), 'issue closed', 'issues closed']]))
     const runs = n('testRuns')
     if (runs > 0) {
       const pass = Math.round(((runs - n('testFails')) / runs) * 100)
@@ -804,7 +817,7 @@ function drawPane(ui: Els, isTerminal: boolean, v: View, s: Settings, width: num
   if (isTwo)
     out.push(
       <Box key="grid" width={W} flexDirection="row" columnGap={1}>
-        <Box key="col-left" width={leftW} flexDirection="column">{[timeCard, modelCard]}</Box>
+        <Box key="col-left" width={leftW} flexDirection="column" rowGap={1}>{[timeCard, modelCard]}</Box>
         <Box key="col-right" width={rightW} flexDirection="column">{hasCode ? [codeCard] : []}</Box>
       </Box>,
     )

@@ -230,7 +230,7 @@ test('each tab draws its own title and chart', async ($, on) => {
     else expect(await ui.find({ type: 'Text', text: '1.4 h' })).toBeDefined() // plain large type off the terminal
     expect(await chartText()).toMatch(isTerminal ? /Sa\s+Su\s+Mo\s+Tu\s+We\s+Th\s+Fr/ : /Sa 0, Su 0, Mo 0, Tu 0, We 2, Th 1, Fr 3/)
     expect((await ui.find({ key: 'summary' }))?.text).toBe('Streak: 3 days in a row')
-    expect((await ui.find({ key: 'code-git' }))?.text).toContain('2 commits')
+    expect((await ui.find({ key: 'code-git-0' }))?.text).toContain('2 commits')
 
     // The currency switch: euro written the German way, dollars back again.
     await ui.press({ key: 'cur-eur' })
@@ -306,4 +306,46 @@ test('/payback answers at once', async ($, on) => {
   memStore(on)
   const r = await $.command.run({ command: 'payback', args: '', ...RUN })
   expect(r.text).toBe('Opened Payback. Hours and money in it are estimates.')
+})
+
+// ---------------------------------------------------------------- the wide desktop pane draws its body as one picture
+
+test('a wide desktop pane draws the body as an SVG, the terminal and a narrow pane keep the text layout', async ($, on) => {
+  memStore(on, SEEDED)
+  mock.clock(on, { now: NOW })
+
+  const wide = await $.ui.mount({ plugin: 'payback', surface: 'desktop', ...pane(140) })
+  const svg = await wide.find({ type: 'Svg' })
+  expect(svg).toBeDefined()
+  expect((await wide.findAll({ type: 'Svg' })).length).toBe(1)
+  const source = String(svg?.props.source)
+  for (const part of ['HOURS SAVED', 'TASKS DONE', 'WHERE THE TIME WENT', 'MODELS AND TOKENS', 'Opus 5.5', '+100', 'Hours and money are estimates.']) expect(source).toContain(part)
+  expect(String(svg?.props.alt)).toContain('Payback, today: 3 tasks')
+  expect(source.startsWith('<svg xmlns="http://www.w3.org/2000/svg"')).toBe(true)
+  expect(await wide.find({ key: 'tilerow-0' })).toBeUndefined()
+  expect(await wide.find({ key: 'tab-week' })).toBeDefined() // the tabs stay real buttons above the picture
+  await wide.press({ key: 'tab-year' })
+  expect(String((await wide.find({ type: 'Svg' }))?.props.source)).toContain('TASKS BY MONTH')
+  await wide.unmount()
+
+  for (const [surface, columns] of [['terminal', 140], ['desktop', 90]] as const) {
+    const ui = await $.ui.mount({ plugin: 'payback', surface, ...pane(columns) })
+    expect((await ui.findAll({ type: 'Svg' })).some(el => String(el.props.source).includes('HOURS SAVED'))).toBe(false) // the text layout's own chart is an Svg too
+    expect(await ui.find({ key: 'tilerow-0' })).toBeDefined()
+    await ui.unmount()
+  }
+})
+
+test('the text layout wraps a long Git row and keeps the model columns apart', async ($, on) => {
+  memStore(on, {
+    'days:2026': { '2026-10-16': { tasks: { coding: 5 }, models: { 'claude-opus-5-5': 977 }, tokens: { 'claude-opus-5-5': { in: 100, out: 15_600_000, cacheRead: 6_300_000_000 } }, n: { commits: 633, pushes: 39, merges: 26, rebases: 4, branches: 13 } } },
+  })
+  mock.clock(on, { now: NOW })
+  const ui = await $.ui.mount({ plugin: 'payback', surface: 'terminal', ...pane(100) })
+  expect((await ui.find({ key: 'code-git-0' }))?.text).toContain('633 commits')
+  expect((await ui.find({ key: 'code-git-1' }))?.text).toContain('13 branches')
+  const row = (await ui.find({ key: 'model-claude-opus-5-5' }))?.text ?? ''
+  expect(row).toContain('977')
+  expect(row).toContain('6.3B') // billions of tokens are written 6.3B, not 6300.0M
+  await ui.unmount()
 })
