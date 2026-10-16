@@ -1,12 +1,28 @@
 {
   "name": "payback",
   "version": "0.1.0",
-  "description": "See what Claude did for you: tasks, code, commits, tests and tokens, and an estimate of the time and money it saved.",
+  "description": "See what Claude did for you: tasks, code, commits, tests and tokens, and an estimate of the time and money it saved. Open it with /payback.",
   "author": {
     "name": "michaelSelbertinger",
     "email": "michael.selbertinger@web.de"
   },
   "homepage": "https://github.com/michaelSelbertinger/payback",
   "repository": "https://github.com/michaelSelbertinger/payback",
-  "license": "GPL-3.0-or-later"
+  "license": "GPL-3.0-or-later",
+  "keywords": [
+    "claude-code",
+    "mod",
+    "dashboard",
+    "analytics",
+    "productivity",
+    "developer-tools",
+    "time-tracking",
+    "git",
+    "tokens",
+    "usage"
+  ],
+  "documentationUrl": "https://github.com/michaelSelbertinger/payback#readme",
+  "supportUrl": "https://github.com/michaelSelbertinger/payback/issues",
+  "privacyPolicyUrl": "https://github.com/michaelSelbertinger/payback/blob/main/PRIVACY.md",
+  "termsOfServiceUrl": "https://github.com/michaelSelbertinger/payback/blob/main/LICENSE"
 }
