@@ -5,6 +5,6 @@
   "author": { "name": "michaelSelbertinger", "email": "michael.selbertinger@web.de" },
   "homepage": "https://github.com/michaelSelbertinger/payback",
   "repository": "https://github.com/michaelSelbertinger/payback",
-  "license": "MIT",
+  "license": "GPL-3.0-or-later",
   "types": "./types/index.d.ts"
 }
