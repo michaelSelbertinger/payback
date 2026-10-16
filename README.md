@@ -200,7 +200,7 @@ The logic lives in `hooks/stats.ts` (counting, sorting, dates) and `hooks/histor
 
 To run your working copy in every session, add its folder to `CLAUDE_CODE_PLUGIN_DIRS` in the `env` block of `~/.claude/settings.json`, and set `CLAUDE_CODE_PLUGIN_DIR_WATCH` to `1` there so desktop sessions reload it when you save.
 
-The pictures in this README are generated, with no hosted services involved. `docs/make-visuals.py` draws the banner and the social preview. `docs/make-pane.cjs` draws the pane: it feeds invented Month data through the mod's own drawing code (`hooks/dashboard.ts`), so the picture shows what the pane draws, and the build command is in its header.
+The pictures in this README are generated, with no hosted services involved, from the mod's own drawing code (`hooks/dashboard.ts`) and invented sample data. The generator scripts are kept outside this repository, so that everything in it is the mod itself.
 
 ## License
 
