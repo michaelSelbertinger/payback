@@ -174,6 +174,12 @@ A mod runs inside Claude Code with your permissions, so here is exactly what Pay
 - **Claude Haiku 5.5**, for the judge described above. It is the only model call, and it stays off unless you turn it on.
 - **The mod's own store**, where the counts live. Payback makes no network requests of its own.
 
+**What Payback sends, and where.** One thing only, and only if you turn it on: the Haiku judge's request to Anthropic through your own Claude Code session (described above). The files and transcripts Payback reads are never sent anywhere.
+
+**Programs it runs.** At most one, and only during `/payback import`: `cmd /c type <file>` on Windows or `cat <file>` elsewhere, to print a session transcript larger than 4 MB, because the file API reads at most 4 MiB at a time. It runs on files under `~/.claude/projects` only, takes no other arguments, and prints to Payback and nowhere else.
+
+**What it changes.** Nothing outside its own store. Its hooks watch tool calls, prompts and turns and pass them on unchanged: they never block, rewrite or approve anything, and Payback does not touch permissions, agents, settings or files. It answers its own `/payback` command, and it draws its pane and one button in the hint line under the prompt.
+
 Run `claude plugin validate` on a clone of this repository to see for yourself: its `hooks:` and `calls:` lines list the events Payback handles and what it asks Claude Code to do.
 
 > [!NOTE]

@@ -27,18 +27,18 @@ let isTestSession = false
 
 const TYPED_ORIGINS = new Set(['composer', 'sdk', 'bridge'])
 
-type $ = EngineInterface
+type Host = EngineInterface
 
 // ---------------------------------------------------------------- store
 
 const yearKey = (day: string) => `days:${day.slice(0, 4)}`
 
-async function loadSettings($: $): Promise<Settings> {
+async function loadSettings($: Host): Promise<Settings> {
   return withDefaults(await $.store.get('settings'))
 }
 
 /** This year's days and last year's, so a week or a streak may reach back over January 1: live and imported added up. */
-async function loadDays($: $, nowMs: number): Promise<Record<string, Day>> {
+async function loadDays($: Host, nowMs: number): Promise<Record<string, Day>> {
   const y = new Date(nowMs).getFullYear()
   const layers = await Promise.all([`days:${y - 1}`, `days:${y}`, `imported:${y - 1}`, `imported:${y}`].map(k => $.store.get(k)))
   const days: Record<string, Day> = {}
@@ -50,7 +50,7 @@ let chain: Promise<unknown> = Promise.resolve()
 let hasStarted = false
 
 /** Adds `delta` to the stored day, read fresh so another session's writes are kept. */
-function record($: $, day: string, delta: Day): Promise<unknown> {
+function record($: Host, day: string, delta: Day): Promise<unknown> {
   if (isEmptyDay(delta) || isTestSession) return Promise.resolve()
   const stored: Day = isFromSdk ? { sdk: delta } : delta
   // ponytail: one key per year, read-modify-write; two sessions writing in the same millisecond can drop one delta.
@@ -79,7 +79,7 @@ type Job = { day: string; size: Size; prompt: string }
 const queue: Job[] = []
 let isJudging = false
 
-async function drain($: $): Promise<void> {
+async function drain($: Host): Promise<void> {
   if (isJudging) return
   isJudging = true
   try {
@@ -123,16 +123,16 @@ type Transcript = { path: string; size: number; isSubagent: boolean }
 let scan: { isCancelled: boolean } | null = null
 let scanned: { range: ImportRange; result: ImportResult } | null = null
 
-const setImport = ($: $, next: ImportView) => update($, importView, () => next)
+const setImport = ($: Host, next: ImportView) => update($, importView, () => next)
 
 /** The moment the live tracker first saved anything: the import reads only what came before it. */
-async function trackedSince($: $, nowMs: number): Promise<number> {
+async function trackedSince($: Host, nowMs: number): Promise<number> {
   const saved = await $.store.get('tracked-since-ms')
   return typeof saved === 'number' ? saved : nowMs
 }
 
 /** Every transcript, main sessions and their subagents', changed on or after `sinceMs`. */
-async function listTranscripts($: $, sinceMs: number): Promise<{ files: Transcript[]; isWindows: boolean }> {
+async function listTranscripts($: Host, sinceMs: number): Promise<{ files: Transcript[]; isWindows: boolean }> {
   const isWindows = (await $.env.get('OS')) === 'Windows_NT'
   const config = await $.env.get('CLAUDE_CONFIG_DIR')
   const home = (await $.env.get('USERPROFILE')) ?? (await $.env.get('HOME'))
@@ -159,7 +159,7 @@ async function listTranscripts($: $, sinceMs: number): Promise<{ files: Transcri
 }
 
 /** The lines of one transcript: read whole when small, streamed through `type`/`cat` when large. */
-async function* transcriptLines($: $, file: Transcript, isWindows: boolean): AsyncGenerator<string> {
+async function* transcriptLines($: Host, file: Transcript, isWindows: boolean): AsyncGenerator<string> {
   if (file.size <= STREAM_ABOVE) {
     yield* (await $.fs.read(file.path)).split('\n')
     return
@@ -178,7 +178,7 @@ async function* transcriptLines($: $, file: Transcript, isWindows: boolean): Asy
   if (buffer) yield buffer
 }
 
-async function runScan($: $, range: ImportRange): Promise<void> {
+async function runScan($: Host, range: ImportRange): Promise<void> {
   const mine = { isCancelled: false }
   scan = mine
   scanned = null
@@ -239,7 +239,7 @@ async function runScan($: $, range: ImportRange): Promise<void> {
 }
 
 /** Saves what the scan found, replacing the imported days of its range, so an import run twice counts once. */
-async function applyImport($: $): Promise<void> {
+async function applyImport($: Host): Promise<void> {
   const shown = await read($, importView)
   if (!scanned) {
     await setImport($, { ...shown, phase: 'error', message: 'The scan was lost when the mod reloaded. Run /payback import again.' })
@@ -261,7 +261,7 @@ async function applyImport($: $): Promise<void> {
   await update($, rev, r => r + 1)
 }
 
-async function undoImport($: $): Promise<string> {
+async function undoImport($: Host): Promise<string> {
   const keys = (await $.store.keys()).filter(k => k.startsWith('imported:'))
   for (const key of keys) await $.store.delete(key)
   await setImport($, IDLE)
@@ -280,7 +280,7 @@ function dayMs(key: string): number | null {
 const rangeText = (r: { fromDay: string; untilDay: string }) =>
   `${r.fromDay === ALL_HISTORY ? 'all kept history' : shortDay(r.fromDay)} to ${shortDay(dayKey(daysBack(dayMs(r.untilDay) ?? 0, 1)))}`
 
-async function importCommand($: $, args: string[]): Promise<string> {
+async function importCommand($: Host, args: string[]): Promise<string> {
   const sub = args[0]?.toLowerCase()
   if (sub === 'undo') return undoImport($)
   if (sub === 'cancel') return cancelImport($)
@@ -305,7 +305,7 @@ async function importCommand($: $, args: string[]): Promise<string> {
   return `Reading your Claude Code history, ${rangeText(range)}. Payback shows a preview when it is done; nothing is saved until you press Import.`
 }
 
-async function cancelImport($: $): Promise<string> {
+async function cancelImport($: Host): Promise<string> {
   if (scan) scan.isCancelled = true
   scanned = null
   await setImport($, IDLE)
@@ -348,7 +348,7 @@ function listSettings(s: Settings): string {
   ].join('\n')
 }
 
-async function settingsCommand($: $, args: string[]): Promise<string> {
+async function settingsCommand($: Host, args: string[]): Promise<string> {
   const s = await loadSettings($)
   if (args.length === 0) return listSettings(s)
   const [name, value] = [args[0]!.toLowerCase(), args[1]]
@@ -375,16 +375,16 @@ async function settingsCommand($: $, args: string[]): Promise<string> {
   return name === 'rate' ? `Hourly rate is now ${fmtMoney(n, s.currency)}.` : `${name} is now ${n} minutes per task.`
 }
 
-const CURRENCY_NAMES: Record<string, Currency> = { eur: 'eur', euro: 'eur', euros: 'eur', '€': 'eur', usd: 'usd', dollar: 'usd', dollars: 'usd', $: 'usd' }
+const CURRENCY_NAMES: Record<string, Currency> = { eur: 'eur', euro: 'eur', euros: 'eur', '€': 'eur', usd: 'usd', dollar: 'usd', dollars: 'usd', '$': 'usd' }
 
 /** Saves the currency read fresh, so a change made elsewhere meanwhile is kept, and redraws the pane. */
-async function setCurrency($: $, currency: Currency) {
+async function setCurrency($: Host, currency: Currency) {
   const s = await loadSettings($)
   await $.store.set('settings', { ...s, currency })
   await update($, rev, r => r + 1)
 }
 
-const openPane = ($: $) => $.ui.open({ id: PANE, title: 'Payback' }).catch(() => undefined)
+const openPane = ($: Host) => $.ui.open({ id: PANE, title: 'Payback' }).catch(() => undefined)
 
 // ---------------------------------------------------------------- drawing
 //
