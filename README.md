@@ -1,26 +1,13 @@
-<p align="center">
-  <img src="docs/hero.svg" alt="Payback: see what Claude did for you, and what it was worth." width="100%">
-</p>
+![Payback: see what Claude did for you, and what it was worth.](docs/hero.svg)
 
-<p align="center">
-  <a href="LICENSE"><img alt="License: GPL-3.0" src="https://img.shields.io/badge/license-GPL--3.0-F2C46D?style=flat-square&labelColor=0D1117"></a>
-  <a href="https://code.claude.com/docs/en/plugins/mods/overview"><img alt="A Claude Code mod, needs Claude Code 2.1.287 or later" src="https://img.shields.io/badge/Claude%20Code%20mod-2.1.287%2B-F2C46D?style=flat-square&labelColor=0D1117"></a>
-  <img alt="Written in TypeScript" src="https://img.shields.io/badge/TypeScript-3DD68C?style=flat-square&labelColor=0D1117&logo=typescript&logoColor=white">
-  <a href="https://github.com/michaelSelbertinger/payback/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/michaelSelbertinger/payback?style=flat-square&color=F2C46D&labelColor=0D1117"></a>
-</p>
+[![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-F2C46D?style=flat-square&labelColor=0D1117)](LICENSE)
+[![A Claude Code mod, needs Claude Code 2.1.287 or later](https://img.shields.io/badge/Claude%20Code%20mod-2.1.287%2B-F2C46D?style=flat-square&labelColor=0D1117)](https://code.claude.com/docs/en/plugins/mods/overview)
+![Written in TypeScript](https://img.shields.io/badge/TypeScript-3DD68C?style=flat-square&labelColor=0D1117&logo=typescript&logoColor=white)
+[![Stars](https://img.shields.io/github/stars/michaelSelbertinger/payback?style=flat-square&color=F2C46D&labelColor=0D1117)](https://github.com/michaelSelbertinger/payback/stargazers)
 
-<p align="center">
-  <b>Payback</b> is a <a href="https://code.claude.com/docs/en/plugins/mods/overview">Claude Code mod</a> that counts what Claude finished for you,<br>
-  sorts it, reads your git and test activity, and estimates the hours and money it saved.
-</p>
+**Payback** is a [Claude Code mod](https://code.claude.com/docs/en/plugins/mods/overview) that counts what Claude finished for you, sorts it, reads your git and test activity, and estimates the hours and money it saved.
 
-<p align="center">
-  <a href="#install">Install</a> ·
-  <a href="#what-you-get">What you get</a> ·
-  <a href="#how-it-counts">How it counts</a> ·
-  <a href="#importing-your-history">Import history</a> ·
-  <a href="#commands">Commands</a>
-</p>
+[Install](#install) · [What you get](#what-you-get) · [How it counts](#how-it-counts) · [Import history](#importing-your-history) · [Commands](#commands)
 
 ---
 
@@ -67,11 +54,9 @@ Three things to type once it is installed:
 
 ## See it
 
-<p align="center">
-  <img src="docs/pane.svg" alt="The Payback pane on the Month tab: tiles for hours saved, tasks and money, a bar chart of tasks for each of the last 30 days, time per kind of task, models and tokens, and code, git and test statistics (sample data)." width="860">
-</p>
+![The Payback pane on the Month tab: tiles for hours saved, tasks and money, a bar chart of tasks for each of the last 30 days, time per kind of task, models and tokens, and code, git and test statistics (sample data).](docs/pane.svg)
 
-<p align="center"><sub>The pane on the Month tab, in euro, with <b>invented sample data</b>. Above it: Today · Week · Month · Year, a $ / € switch and an All · You · SDK filter. The tiles, chart and cards are drawn by the mod itself.</sub></p>
+*The pane on the Month tab, in euro, with **invented sample data**. Above it: Today · Week · Month · Year, a $ / € switch and an All · You · SDK filter. The tiles, chart and cards are drawn by the mod itself.*
 
 ## What you get
 
@@ -184,7 +169,7 @@ When the judge is on, each finished coding task gets one small call to Claude Ha
 
 A mod runs inside Claude Code with your permissions, so here is exactly what Payback touches:
 
-- **Your session transcripts** in `~/.claude/projects`, read only when you run `/payback import`, and only to count. Large ones are read with `cmd /c type` (Windows) or `cat`.
+- **Your session transcripts** in `~/.claude/projects`, read only when you run `/payback import`, and only to count. Large ones are read with `cmd /c type` (Windows) or `cat`; on Windows, a path containing `& | < > ^ % !` or a quote is skipped rather than handed to `cmd`.
 - **A few environment variables**: `CLAUDE_CODE_ENTRYPOINT`, `CLAUDE_CONFIG_DIR`, `HOME`, `USERPROFILE` and `OS`.
 - **Claude Haiku 5.5**, for the judge described above. It is the only model call, and it stays off unless you turn it on.
 - **The mod's own store**, where the counts live. Payback makes no network requests of its own.

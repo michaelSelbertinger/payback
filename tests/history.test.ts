@@ -318,3 +318,53 @@ test('the pane: who started the work, and a filter on it', async ($, on) => {
     await ui.unmount()
   }
 })
+
+// ---------------------------------------------------------------- large transcripts are streamed through the shell
+
+const BS = String.fromCharCode(92)
+
+function bigHome(on: On, name: string, os: string | undefined) {
+  on('env.get', ($, e) => ({ value: e.name === 'USERPROFILE' || e.name === 'HOME' ? 'C:/Users/me' : e.name === 'OS' ? os : undefined }))
+  on('fs.exists', ($, e) => ({ value: norm(e.path) === ROOT }))
+  const entry = (n: string, kind: 'dir' | 'file') => ({ name: n, kind, size: 5_000_000, mtimeMs: NOW, isLink: false })
+  on('fs.list', ($, e) => ({ value: norm(e.path) === ROOT ? [entry('proj', 'dir')] : norm(e.path) === `${ROOT}/proj` ? [entry(name, 'file')] : [] }))
+  const spawned: (readonly string[])[] = []
+  on('process.spawn', async function* ($, e) {
+    spawned.push(e.argv)
+    yield { stream: 'stdout' as const, text: TRANSCRIPT.slice(0, 40) } // cut mid-line, as a pipe does
+    yield { stream: 'stdout' as const, text: TRANSCRIPT.slice(40) }
+    return { value: { code: 0, signal: null } }
+  })
+  return spawned
+}
+
+async function scanBig($: Engine, on: On, name: string, os: string | undefined) {
+  memStore(on, { 'tracked-since-ms': new Date(2026, 9, 16, 9, 30).getTime() })
+  const clock = mock.clock(on, { now: NOW })
+  const spawned = bigHome(on, name, os)
+  await $.command.run({ command: 'payback', args: 'import', ...RUN })
+  await clock.advance(10)
+  const ui = await $.ui.mount({ plugin: 'payback', surface: 'desktop', ...PANE })
+  return { spawned, ui }
+}
+
+test('import: a large transcript is streamed through cmd on Windows, spaces and brackets in its path are fine', async ($, on) => {
+  const { spawned, ui } = await scanBig($, on, 'My Chats (work).jsonl', 'Windows_NT')
+  expect(spawned).toEqual([['cmd', '/c', 'type', `${ROOT}/proj/My Chats (work).jsonl`.replaceAll('/', BS)]])
+  expect((await ui.find({ key: 'imp-found' }))?.text).toBe('Found 3 tasks on 2 days in 1 session') // lines cut in the middle were put back together
+  await ui.unmount()
+})
+
+test('import: a large transcript is streamed through cat elsewhere', async ($, on) => {
+  const { spawned, ui } = await scanBig($, on, 's1.jsonl', undefined)
+  expect(spawned).toEqual([['cat', `${ROOT}/proj/s1.jsonl`]])
+  expect((await ui.find({ key: 'imp-found' }))?.text).toBe('Found 3 tasks on 2 days in 1 session')
+  await ui.unmount()
+})
+
+test('import: a Windows path cmd would read as a command is skipped, never handed to it', async ($, on) => {
+  const { spawned, ui } = await scanBig($, on, 'a&b.jsonl', 'Windows_NT')
+  expect(spawned).toEqual([])
+  expect((await ui.find({ key: 'imp-skipped' }))?.text).toContain('1 unreadable file')
+  await ui.unmount()
+})

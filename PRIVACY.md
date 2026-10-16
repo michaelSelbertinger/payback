@@ -12,6 +12,8 @@ To count what Claude did for you, Payback reads, while Claude Code runs:
 
 It reads this text to count it. It does not keep it.
 
+The transcripts are the session log files Claude Code writes on your own disk. Payback does not touch Claude.ai conversations, Claude's memory or any account data, it reads those logs only when you run `/payback import` (which shows a preview and saves nothing until you press **Import**), and none of it leaves your machine.
+
 ## What Payback stores
 
 Only totals, on your machine, in the mod's own store in Claude Code's plugin store folder (`~/.claude/plugins/store`): for each calendar day, how many tasks of each kind finished, which models did them, lines added and removed, how many files were touched, languages (from file extensions), counts of commits, pushes, merges, rebases, branches, pull requests, issues, test runs and builds, test runtime and pass and fail counts, and token counts per model. Plus your settings (hourly rate, currency, minutes per kind of task, whether the judge is on) and the time live tracking began.

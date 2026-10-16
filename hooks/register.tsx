@@ -115,6 +115,8 @@ async function drain($: $): Promise<void> {
 
 const ALL_HISTORY = '0000-01-01'
 const STREAM_ABOVE = 4_000_000 // $.fs.read stops at 4 MiB; bigger transcripts are streamed through the shell
+/** `cmd` reads these as commands (& | < > ^ % ! and quotes), not as part of a file name: a Windows path with one is skipped, never handed to it. */
+const CMD_SAFE_PATH = /^[\p{L}\p{N} _.:\\/()[\]@+,'~-]+$/u
 
 type Transcript = { path: string; size: number; isSubagent: boolean }
 
@@ -162,6 +164,7 @@ async function* transcriptLines($: $, file: Transcript, isWindows: boolean): Asy
     yield* (await $.fs.read(file.path)).split('\n')
     return
   }
+  if (isWindows && !CMD_SAFE_PATH.test(file.path)) throw new Error('its path has a character cmd would read as a command')
   const argv = isWindows ? ['cmd', '/c', 'type', file.path.replaceAll('/', '\\')] : ['cat', file.path]
   let buffer = ''
   for await (const chunk of $.process.spawn({ argv })) {
