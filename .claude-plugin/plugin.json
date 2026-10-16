@@ -1,0 +1,10 @@
+{
+  "name": "payback",
+  "version": "0.1.0",
+  "description": "See what Claude did for you: tasks, code, commits, tests and tokens, and an estimate of the time and money it saved.",
+  "author": { "name": "michaelSelbertinger", "email": "michael.selbertinger@web.de" },
+  "homepage": "https://github.com/michaelSelbertinger/payback",
+  "repository": "https://github.com/michaelSelbertinger/payback",
+  "license": "MIT",
+  "types": "./types/index.d.ts"
+}
