@@ -54,10 +54,10 @@ In the desktop app, where `/plugin` does not run: click **+** next to the prompt
 ## See it
 
 <p align="center">
-  <img src="docs/pane.svg" alt="The Payback pane on the Week tab: tiles for hours saved, tasks and money, a chart of tasks per day, time per kind of task, models and tokens, and code, git and test statistics." width="860">
+  <img src="docs/pane.svg" alt="The Payback pane on the Month tab: tiles for hours saved, tasks and money, a bar chart of tasks for each of the last 30 days, time per kind of task, models and tokens, and code, git and test statistics (sample data)." width="860">
 </p>
 
-<p align="center"><sub>The pane on the Week tab, in euro, with <b>sample data</b>. There is a chip row for Today · Week · Month · Year, a $ / € switch, and an All · You · SDK filter.</sub></p>
+<p align="center"><sub>The pane on the Month tab, in euro, with <b>invented sample data</b>. Above it: Today · Week · Month · Year, a $ / € switch and an All · You · SDK filter. The tiles, chart and cards are drawn by the plugin itself.</sub></p>
 
 ## What you get
 
@@ -172,7 +172,7 @@ The logic lives in `hooks/stats.ts` (counting, sorting, dates) and `hooks/histor
 
 To run your working copy in every session, add its folder to `CLAUDE_CODE_PLUGIN_DIRS` in the `env` block of `~/.claude/settings.json`, and set `CLAUDE_CODE_PLUGIN_DIR_WATCH` to `1` there so desktop sessions reload it when you save.
 
-The pictures in this README are generated, with no hosted services involved, by `docs/make-visuals.py`. That is where the sample data in the pane picture lives.
+The pictures in this README are generated, with no hosted services involved. `docs/make-visuals.py` draws the banner and the social preview. `docs/make-pane.cjs` draws the pane: it feeds invented Month data through the plugin's own drawing code (`hooks/dashboard.ts`), so the picture shows what the pane draws, and the build command is in its header.
 
 ## License
 

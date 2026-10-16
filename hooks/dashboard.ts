@@ -65,7 +65,7 @@ function card(title: string, lines: number, draw: (x: number, y: number, w: numb
 }
 
 /** The body of the pane as an SVG document, and a description of it for a reader that cannot see it. */
-export function dashboardSvg(v: View, s: Settings, columns = 160): { source: string; alt: string } {
+export function dashboardSvg(v: View, s: Settings, columns = 160): { source: string; alt: string; width: number; height: number; body: string } {
   // Drawn at about the pane's own pixel width, so type keeps its size; two columns of cards once there is room for them.
   const W = Math.min(DASHBOARD_MAX, Math.max(MIN_WIDTH, Math.round(columns * COLUMN_PX)))
   const isTwo = W >= 1000
@@ -241,10 +241,12 @@ export function dashboardSvg(v: View, s: Settings, columns = 160): { source: str
     `Payback, ${v.title.toLowerCase()}: ${fmtInt(taskCount(d))} tasks, ${hours} hours saved, ${fmtMoney(amount, s.currency)} (estimates). ` +
     (kinds.length > 0 ? kinds.map(k => `${KIND_LABEL[k]} ${d.tasks?.[k]}`).join(', ') + '. ' : '') +
     v.summary
+  const body = out.join('')
   const source =
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">` +
     box(0.5, 0.5, W - 1, H - 1, C.dark, 16, C.hair) +
-    out.join('') +
+    body +
     '</svg>'
-  return { source, alt }
+  // `body` is the drawing without its frame, in the picture's own coordinates: docs/make-pane.cjs sets it under a header for the README.
+  return { source, alt, width: W, height: H, body }
 }
