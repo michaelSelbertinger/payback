@@ -1,7 +1,7 @@
 {
   "name": "payback",
   "owner": { "name": "michaelSelbertinger" },
-  "metadata": { "description": "Payback, a Claude Code plugin that shows what Claude did for you and what it was worth." },
+  "metadata": { "description": "Payback, a Claude Code mod that shows what Claude did for you and what it was worth." },
   "plugins": [
     {
       "name": "payback",

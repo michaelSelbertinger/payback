@@ -2,7 +2,7 @@
 // The body is Payback's own drawing code (hooks/dashboard.ts), so the picture shows what the pane really draws;
 // only the header above it (title, tabs, filter) is redrawn here, because in the app those are real buttons.
 //
-// Build the plugin's pure modules once, then run this with the build folder:
+// Build the mod's pure modules once, then run this with the build folder:
 //   npx -p typescript tsc --outDir build --rootDir . --module commonjs --target es2022 --lib es2023 --skipLibCheck hooks/stats.ts hooks/dashboard.ts hooks/theme.ts
 //   node docs/make-pane.cjs build docs
 const fs = require('fs')

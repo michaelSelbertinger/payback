@@ -1,7 +1,7 @@
 """Generates Payback's README visuals: hero.svg (animated) and social.svg, the source of
 social-preview.png (1280x640; render it with a browser and upload it under Settings, Social preview).
 Usage: python docs/make-visuals.py docs
-(docs/pane.svg is drawn by docs/make-pane.cjs, from the plugin's own drawing code.)
+(docs/pane.svg is drawn by docs/make-pane.cjs, from the mod's own drawing code.)
 Plain SVG with system fonts and inline CSS only: GitHub serves README images through a sandbox that drops scripts,
 external stylesheets and web fonts, so everything here is self-contained."""
 import sys
@@ -67,7 +67,7 @@ def hero(w=1200, h=420, animate=True):
              + t(64, 266, 'and what it was worth.', GOLD, 30, 600, font=SANS)
              + t(64, 304, 'tasks · lines · commits · tests · tokens', MUTED, 15) + '</g>')
     p.append(f'<g{rise(0.45)}>' + chip(64, 332, 96, '/payback', True, 30).replace('y="349.5"', 'y="351.5"')
-             + chip(172, 332, 150, 'Claude Code plugin', False, 30) + chip(334, 332, 88, 'GPL-3.0', False, 30) + '</g>')
+             + chip(172, 332, 136, 'Claude Code mod', False, 30) + chip(320, 332, 88, 'GPL-3.0', False, 30) + '</g>')
     # Right: the summary card
     cx, cy, cw, ch = 704, 52, 432, 316
     p.append(rect(cx, cy, cw, ch, PANEL, 16, HAIR))

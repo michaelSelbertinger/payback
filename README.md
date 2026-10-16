@@ -4,14 +4,13 @@
 
 <p align="center">
   <a href="LICENSE"><img alt="License: GPL-3.0" src="https://img.shields.io/badge/license-GPL--3.0-F2C46D?style=flat-square&labelColor=0D1117"></a>
-  <img alt="Needs Claude Code 2.1.299 or later" src="https://img.shields.io/badge/Claude%20Code-2.1.299%2B-F2C46D?style=flat-square&labelColor=0D1117">
-  <img alt="Plugin API: early access" src="https://img.shields.io/badge/plugin%20API-early%20access-E3B341?style=flat-square&labelColor=0D1117">
+  <a href="https://code.claude.com/docs/en/plugins/mods/overview"><img alt="A Claude Code mod, needs Claude Code 2.1.287 or later" src="https://img.shields.io/badge/Claude%20Code%20mod-2.1.287%2B-F2C46D?style=flat-square&labelColor=0D1117"></a>
   <img alt="Written in TypeScript" src="https://img.shields.io/badge/TypeScript-3DD68C?style=flat-square&labelColor=0D1117&logo=typescript&logoColor=white">
   <a href="https://github.com/michaelSelbertinger/payback/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/michaelSelbertinger/payback?style=flat-square&color=F2C46D&labelColor=0D1117"></a>
 </p>
 
 <p align="center">
-  <b>Payback</b> is a <a href="https://claude.com/product/claude-code">Claude Code</a> plugin that counts what Claude finished for you,<br>
+  <b>Payback</b> is a <a href="https://code.claude.com/docs/en/plugins/mods/overview">Claude Code mod</a> that counts what Claude finished for you,<br>
   sorts it, reads your git and test activity, and estimates the hours and money it saved.
 </p>
 
@@ -31,7 +30,7 @@
 /plugin install payback --marketplace michaelSelbertinger/payback
 ```
 
-Then type `/payback`. Want your past sessions in the report too? Run `/payback import` once.
+Then type `/payback`. Want your past sessions in the report too? Run `/payback import` once. A mod installs like any plugin, through the normal marketplace flow; if you install from a shell while a session is open, run `/reload-plugins` there to load it.
 
 <details>
 <summary>From a shell, or in the desktop app</summary>
@@ -49,7 +48,7 @@ In the desktop app, where `/plugin` does not run: click **+** next to the prompt
 </details>
 
 > [!NOTE]
-> Payback is built on Claude Code's plugin API, which is in early access and can change between releases. It needs Claude Code **2.1.299 or later**.
+> Payback is a [mod](https://code.claude.com/docs/en/plugins/mods/overview): a plugin that changes how Claude Code looks and behaves. Mods need Claude Code **2.1.287 or later** in the terminal (2.1.286 in the desktop app). Payback was built and tested on **2.1.299**, and the mods API is young enough to change between releases.
 
 ## See it
 
@@ -57,7 +56,7 @@ In the desktop app, where `/plugin` does not run: click **+** next to the prompt
   <img src="docs/pane.svg" alt="The Payback pane on the Month tab: tiles for hours saved, tasks and money, a bar chart of tasks for each of the last 30 days, time per kind of task, models and tokens, and code, git and test statistics (sample data)." width="860">
 </p>
 
-<p align="center"><sub>The pane on the Month tab, in euro, with <b>invented sample data</b>. Above it: Today · Week · Month · Year, a $ / € switch and an All · You · SDK filter. The tiles, chart and cards are drawn by the plugin itself.</sub></p>
+<p align="center"><sub>The pane on the Month tab, in euro, with <b>invented sample data</b>. Above it: Today · Week · Month · Year, a $ / € switch and an All · You · SDK filter. The tiles, chart and cards are drawn by the mod itself.</sub></p>
 
 ## What you get
 
@@ -81,7 +80,7 @@ flowchart LR
     C -- "yes" --> D["Sorted by the tools it used<br/>Coding · DevOps · Research · Docs …"]
     D --> F["Coding tasks sized<br/>by lines changed"]
     F -. "optional" .-> G["Haiku 5.5 judge:<br/>type and size"]
-    F --> H[("Daily record in<br/>the plugin's store")]
+    F --> H[("Daily record in<br/>the mod's store")]
     G --> H
     H --> I["/payback pane"]
 ```
@@ -142,6 +141,16 @@ When the judge is on, each finished coding task gets one small call to Claude Ha
 > [!IMPORTANT]
 > Claude Code deletes transcripts after 30 days by default, so that is as far back as an import can go. Raise `cleanupPeriodDays` in your settings to keep more from now on.
 
+## Where it runs
+
+| Where | What you get |
+| --- | --- |
+| **Desktop app, Code tab** | The pane, the hint-line button and every command. This is where Payback was developed and used. |
+| **Terminal** | The same pane in a text layout. Covered by automated tests, not yet by daily use. |
+| **VS Code extension** | Mods draw there from extension version 2.1.299. Payback has not been tried in it. |
+| **`claude -p` and the Agent SDK** | Counting runs, nothing is drawn. |
+| **WSL sessions in the desktop app** | Mods do not run there. |
+
 ## Commands
 
 | Command | What it does |
@@ -156,10 +165,19 @@ When the judge is on, each finished coding task gets one small call to Claude Ha
 | `/payback import` | Reads your past sessions into the report. Also `/payback import 30d` or `/payback import 2026-09-20 2026-10-10`. |
 | `/payback import undo` | Removes everything imported. Live data is untouched. |
 
-## Privacy
+## Trust and privacy
+
+A mod runs inside Claude Code with your permissions, so here is exactly what Payback touches:
+
+- **Your session transcripts** in `~/.claude/projects`, read only when you run `/payback import`, and only to count. Large ones are read with `cmd /c type` (Windows) or `cat`.
+- **A few environment variables**: `CLAUDE_CODE_ENTRYPOINT`, `CLAUDE_CONFIG_DIR`, `HOME`, `USERPROFILE` and `OS`.
+- **Claude Haiku 5.5**, for the judge described above. It is the only model call, and it can be turned off.
+- **The mod's own store**, where the counts live. Payback makes no network requests of its own.
+
+Run `claude plugin validate` on a clone of this repository to see for yourself: its `hooks:` and `calls:` lines list the events Payback handles and what it asks Claude Code to do.
 
 > [!NOTE]
-> All counts stay on your machine, in the plugin's own store. Payback sends nothing anywhere, except the Haiku judge's calls described above, which go to Anthropic through your own Claude Code session and can be turned off.
+> All counts stay on your machine. Nothing is sent anywhere, except the Haiku judge's calls, which go to Anthropic through your own Claude Code session.
 
 ## Development
 
@@ -172,7 +190,7 @@ The logic lives in `hooks/stats.ts` (counting, sorting, dates) and `hooks/histor
 
 To run your working copy in every session, add its folder to `CLAUDE_CODE_PLUGIN_DIRS` in the `env` block of `~/.claude/settings.json`, and set `CLAUDE_CODE_PLUGIN_DIR_WATCH` to `1` there so desktop sessions reload it when you save.
 
-The pictures in this README are generated, with no hosted services involved. `docs/make-visuals.py` draws the banner and the social preview. `docs/make-pane.cjs` draws the pane: it feeds invented Month data through the plugin's own drawing code (`hooks/dashboard.ts`), so the picture shows what the pane draws, and the build command is in its header.
+The pictures in this README are generated, with no hosted services involved. `docs/make-visuals.py` draws the banner and the social preview. `docs/make-pane.cjs` draws the pane: it feeds invented Month data through the mod's own drawing code (`hooks/dashboard.ts`), so the picture shows what the pane draws, and the build command is in its header.
 
 ## License
 
