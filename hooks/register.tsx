@@ -553,9 +553,9 @@ function chartSvg(buckets: View['chart'], width: number): string {
     const x = i * slot + (slot - barW) / 2
     const cx = i * slot + slot / 2
     const fill = b.isCurrent ? C.gold : C.text
-    const h = b.isFuture ? 0 : b.value > 0 ? Math.max(3, (b.value / max) * (base - 18)) : 2
-    const bar = b.isFuture ? '' : `<rect x="${x.toFixed(1)}" y="${(base - h).toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" rx="3" fill="${b.value > 0 ? fill : C.hair}"/>`
-    const count = b.value > 0 && slot >= 16 ? `<text x="${cx.toFixed(1)}" y="${(base - h - 5).toFixed(1)}" text-anchor="middle" font-size="11" fill="${C.muted}">${b.value}</text>` : ''
+    const barH = b.isFuture ? 0 : b.value > 0 ? Math.max(3, (b.value / max) * (base - 18)) : 2
+    const bar = b.isFuture ? '' : `<rect x="${x.toFixed(1)}" y="${(base - barH).toFixed(1)}" width="${barW.toFixed(1)}" height="${barH.toFixed(1)}" rx="3" fill="${b.value > 0 ? fill : C.hair}"/>`
+    const count = b.value > 0 && slot >= 16 ? `<text x="${cx.toFixed(1)}" y="${(base - barH - 5).toFixed(1)}" text-anchor="middle" font-size="11" fill="${C.muted}">${b.value}</text>` : ''
     const showLabel = (buckets.length - 1 - i) % every === 0
     const label = showLabel ? `<text x="${cx.toFixed(1)}" y="${vh - 5}" text-anchor="middle" font-size="11" fill="${b.isCurrent ? C.gold : C.muted}">${b.label}</text>` : ''
     return bar + count + label
