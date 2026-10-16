@@ -569,8 +569,8 @@ const EMPTY: Record<Tab, string> = {
 
 const plural = (x: number, one: string, many = `${one}s`) => `${fmtInt(x)} ${x === 1 ? one : many}`
 
-/** Columns from which the desktop draws the body as a picture: below it the picture would shrink too far to read. */
-const WIDE = 120
+/** Columns from which the desktop draws the body as a picture, sized to the pane; below it the text layout is kinder. */
+const WIDE = 62
 
 type ImportActions = { importNow: () => void; cancel: () => void; close: () => void }
 type Who = { source: Source; you: number; sdk: number; hasSdk: boolean; set: (s: Source) => void }
@@ -695,7 +695,7 @@ function drawPane(ui: Els, isTerminal: boolean, v: View, s: Settings, width: num
 
   // A wide desktop pane draws everything below as one picture; the terminal and narrow panes keep the text layout below.
   if (!isTerminal && W >= WIDE && 'Svg' in ui) {
-    const { source, alt } = dashboardSvg(v, s)
+    const { source, alt } = dashboardSvg(v, s, W)
     const { Svg } = ui
     out.push(<Box key="gap-dashboard" height={1} />, <Svg key="dashboard" source={source} alt={alt} />)
     return <Box key="report" flexDirection="column" width={W}>{out}</Box>
@@ -821,7 +821,7 @@ function drawPane(ui: Els, isTerminal: boolean, v: View, s: Settings, width: num
         <Box key="col-right" width={rightW} flexDirection="column">{hasCode ? [codeCard] : []}</Box>
       </Box>,
     )
-  else out.push(...[timeCard, ...(hasCode ? [codeCard] : []), modelCard])
+  else out.push(<Box key="stack" width={W} flexDirection="column" rowGap={1}>{[timeCard, ...(hasCode ? [codeCard] : []), modelCard]}</Box>)
 
   out.push(line(c, 'foot', W, [['Hours and money are estimates. /payback settings changes them.', C.muted]]))
   return <Box key="report" flexDirection="column" width={W}>{out}</Box>

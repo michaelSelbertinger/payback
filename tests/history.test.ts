@@ -200,7 +200,7 @@ test('import: a preview first, saved on Import, the same run twice counts once, 
   await ui.press({ key: 'imp-close' })
   expect(await ui.find({ key: 'card-import' })).toBeUndefined()
   await ui.press({ key: 'tab-week' })
-  expect((await ui.find({ key: 'kind-coding' }))?.text).toContain('1 task')
+  expect(String((await ui.find({ type: 'Svg' }))?.props.source)).toContain('1 task') // the imported coding task, in the picture
   await ui.unmount()
 
   await run('import')
@@ -289,9 +289,23 @@ test('the pane: who started the work, and a filter on it', async ($, on) => {
     'days:2026': { '2026-10-16': { tasks: { coding: 2 }, models: { 'claude-opus-5-5': 2 }, sdk: { tasks: { documents: 3 }, models: { 'claude-opus-5-5': 3 } } } },
   })
   mock.clock(on, { now: NOW })
-  for (const surface of ['terminal', 'desktop'] as const) {
-    const ui = await $.ui.mount({ plugin: 'payback', surface, ...PANE })
+  for (const [surface, columns] of [['terminal', 90], ['desktop', 50], ['desktop', 140]] as const) {
+    const ui = await $.ui.mount({ plugin: 'payback', surface, ...PANE, props: { ...PANE.props, bodyColumns: columns } })
     expect((await ui.find({ key: 'sources' }))?.text).toContain('You 2 · SDK 3')
+    if (columns === 140) {
+      // the picture: the same rows, as text inside it
+      const body = async () => String((await ui.find({ type: 'Svg' }))?.props.source)
+      expect(await body()).toMatch(/Coding[\s\S]*Documents/)
+      await ui.press({ key: 'src-sdk' })
+      expect(await body()).not.toContain('Coding')
+      expect(await body()).toContain('3 tasks')
+      await ui.press({ key: 'src-you' })
+      expect(await body()).not.toContain('Documents')
+      expect(await body()).toContain('2 tasks')
+      await ui.press({ key: 'src-all' })
+      await ui.unmount()
+      continue
+    }
     expect((await ui.find({ key: 'kind-coding' }))?.text).toContain('2 tasks')
     expect((await ui.find({ key: 'kind-documents' }))?.text).toContain('3 tasks')
     await ui.press({ key: 'src-sdk' })

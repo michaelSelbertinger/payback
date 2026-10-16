@@ -221,7 +221,8 @@ test('each tab draws its own title and chart', async ($, on) => {
   memStore(on, SEEDED)
   mock.clock(on, { now: NOW })
   for (const surface of SURFACES) {
-    const ui = await $.ui.mount({ plugin: 'payback', surface, ...pane(90) })
+    // 50 columns on the desktop is below the picture's minimum, so this checks its text layout; the picture has its own test below
+    const ui = await $.ui.mount({ plugin: 'payback', surface, ...pane(surface === 'desktop' ? 50 : 90) })
     expect((await ui.find({ key: 'title' }))?.text).toContain('TODAY')
     expect((await ui.find({ key: 'title' }))?.text).toContain('Fr 16 Oct 2026')
     const isTerminal = surface === 'terminal'
@@ -275,12 +276,12 @@ test('a narrow pane stacks the tiles and no row is wider than the pane', async (
   memStore(on, SEEDED)
   mock.clock(on, { now: NOW })
   for (const surface of SURFACES) {
-    for (const [width, rows] of [[30, 3], [50, 2], [100, 1]] as const) {
+    for (const [width, rows] of (surface === 'desktop' ? [[30, 3], [50, 2]] : [[30, 3], [50, 2], [100, 1]]) as readonly (readonly [number, number])[]) {
       const ui = await $.ui.mount({ plugin: 'payback', surface, ...pane(width) })
       for (let r = 0; r < 3; r++) expect(Boolean(await ui.find({ key: `tilerow-${r}` }))).toBe(r < rows)
       for (const box of await ui.findAll({ type: 'Box' })) {
         // Containers hold many rows; every single row in them is checked on its own.
-        if (!box.key || /^(tile|report|card-[a-z]+$|col-|grid|gap)/.test(box.key)) continue
+        if (!box.key || /^(tile|report|card-[a-z]+$|col-|grid|gap|stack)/.test(box.key)) continue
         expect([...box.text].length <= width, `${box.key} is ${[...box.text].length} wide at ${width}: ${box.text}`).toBe(true)
       }
       await ui.unmount()
@@ -328,10 +329,11 @@ test('a wide desktop pane draws the body as an SVG, the terminal and a narrow pa
   expect(String((await wide.find({ type: 'Svg' }))?.props.source)).toContain('TASKS BY MONTH')
   await wide.unmount()
 
-  for (const [surface, columns] of [['terminal', 140], ['desktop', 90]] as const) {
+  // The picture starts at 62 columns on the desktop; the terminal and anything narrower keep the text layout (whose chart is an Svg too).
+  for (const [surface, columns, isPicture] of [['terminal', 140, false], ['desktop', 61, false], ['desktop', 62, true]] as const) {
     const ui = await $.ui.mount({ plugin: 'payback', surface, ...pane(columns) })
-    expect((await ui.findAll({ type: 'Svg' })).some(el => String(el.props.source).includes('HOURS SAVED'))).toBe(false) // the text layout's own chart is an Svg too
-    expect(await ui.find({ key: 'tilerow-0' })).toBeDefined()
+    expect((await ui.findAll({ type: 'Svg' })).some(el => String(el.props.source).includes('HOURS SAVED'))).toBe(isPicture)
+    expect(Boolean(await ui.find({ key: 'tilerow-0' }))).toBe(!isPicture)
     await ui.unmount()
   }
 })

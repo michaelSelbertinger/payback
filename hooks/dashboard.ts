@@ -13,7 +13,12 @@ const SANS = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, s
 /** Pixels one character takes at 13px, with room for whichever monospace font the machine falls back to. */
 const CHAR = 8
 
-export const DASHBOARD_WIDTH = 1200
+/** Widest the picture is drawn; a wider pane leaves the rest empty rather than stretching the type. */
+export const DASHBOARD_MAX = 1200
+/** Pixels one pane column takes, as the desktop lays out its monospace type. */
+const COLUMN_PX = 7.8
+/** Narrowest picture that still lays out cleanly (tiles, the model table), about 62 pane columns. */
+export const MIN_WIDTH = 484
 const PAD = 28
 const GAP = 14
 const ROW = 24
@@ -60,8 +65,10 @@ function card(title: string, lines: number, draw: (x: number, y: number, w: numb
 }
 
 /** The body of the pane as an SVG document, and a description of it for a reader that cannot see it. */
-export function dashboardSvg(v: View, s: Settings): { source: string; alt: string } {
-  const W = DASHBOARD_WIDTH
+export function dashboardSvg(v: View, s: Settings, columns = 160): { source: string; alt: string } {
+  // Drawn at about the pane's own pixel width, so type keeps its size; two columns of cards once there is room for them.
+  const W = Math.min(DASHBOARD_MAX, Math.max(MIN_WIDTH, Math.round(columns * COLUMN_PX)))
+  const isTwo = W >= 1000
   const CW = W - 2 * PAD
   const d = v.total
   const n = (k: Counter) => d.n?.[k] ?? 0
@@ -78,10 +85,14 @@ export function dashboardSvg(v: View, s: Settings): { source: string; alt: strin
     ['TASKS DONE', fmtInt(taskCount(d)), plural(v.activeDays, 'active day')],
     [s.currency === 'eur' ? 'WORTH IN EUROS' : "DOLLARS' WORTH", fmtMoney(amount, s.currency), `estimate at ${fmtMoney(s.rate, s.currency)}/h`],
   ]
+  const rate = `at ${fmtMoney(s.rate, s.currency)}/h` // the shorter caption, when the full one will not fit a narrow tile
+  const pad = tw > 260 ? 22 : 14
   tiles.forEach(([label, value, foot], i) => {
     const x = PAD + i * (tw + GAP)
-    out.push(box(x + 0.5, y + 0.5, tw - 1, 115, C.dark, 12, C.hair), text(x + 22, y + 32, label, { fill: C.muted, size: 12, weight: 600 }))
-    out.push(text(x + 22, y + 80, value, { size: 44, weight: 800, font: SANS }), text(x + 22, y + 102, foot, { fill: C.muted, size: 13 }))
+    const room = tw - 2 * pad
+    const size = Math.max(16, Math.min(44, Math.floor(room / (value.length * 0.6)))) // a long number shrinks rather than overflows
+    out.push(box(x + 0.5, y + 0.5, tw - 1, 115, C.dark, 12, C.hair), text(x + pad, y + 32, fit(label, Math.floor(room / 7.3)), { fill: C.muted, size: 12, weight: 600 }))
+    out.push(text(x + pad, y + 46 + size * 0.76, value, { size, weight: 800, font: SANS }), text(x + pad, y + 102, foot.length > Math.floor(room / 7.4) && i === 2 ? rate : fit(foot, Math.floor(room / 7.4)), { fill: C.muted, size: 12 }))
   })
   y += 116 + 30
 
@@ -100,7 +111,7 @@ export function dashboardSvg(v: View, s: Settings): { source: string; alt: strin
     const cx = PAD + slot * i + slot / 2
     const h = b.isFuture ? 0 : b.value > 0 ? Math.max(4, (b.value / top) * plotH) : 2
     if (!b.isFuture) out.push(box(cx - barW / 2, base - h, barW, h, b.isCurrent ? C.gold : b.value > 0 ? C.text : C.hair, 4))
-    if (!b.isFuture && b.value > 0 && slot >= 20) out.push(text(cx, base - h - 7, String(b.value), { fill: b.isCurrent ? C.gold : C.muted, size: 12, anchor: 'middle' }))
+    if (!b.isFuture && b.value > 0 && slot >= 24) out.push(text(cx, base - h - 7, String(b.value), { fill: b.isCurrent ? C.gold : C.muted, size: 12, anchor: 'middle' }))
     if ((buckets.length - 1 - i) % every === 0) out.push(text(cx, base + 22, b.label, { fill: b.isCurrent ? C.gold : C.muted, size: 12, weight: b.isCurrent ? 700 : 400, anchor: 'middle' }))
   })
   y = base + 22 + 30
@@ -191,8 +202,8 @@ export function dashboardSvg(v: View, s: Settings): { source: string; alt: strin
   }
   const hasCode = rows.length > 0 || (d.tasks?.coding ?? 0) > 0
 
-  const LEFT = 540
-  const RIGHT = CW - GAP - LEFT
+  const LEFT = isTwo ? Math.round(CW * 0.472) : CW
+  const RIGHT = isTwo ? CW - GAP - LEFT : CW
   const codeChars = Math.floor((RIGHT - 36 - 112) / CHAR)
   const laid = rows.map(r => ({ label: r.label, lines: r.items ? wrapItems(r.items, codeChars).map((t): Span[] => [[t]]) : (r.lines ?? []) }))
   const codeLines = laid.reduce((a, r) => a + r.lines.length, 0)
@@ -211,8 +222,8 @@ export function dashboardSvg(v: View, s: Settings): { source: string; alt: strin
       .join('')
   })
 
-  const colLeft = hasCode ? [timeCard, modelCard] : [timeCard]
-  const colRight = hasCode ? [codeCard] : [modelCard]
+  const colLeft = !isTwo ? [timeCard, ...(hasCode ? [codeCard] : []), modelCard] : hasCode ? [timeCard, modelCard] : [timeCard]
+  const colRight = !isTwo ? [] : hasCode ? [codeCard] : [modelCard]
   const stack = (cards: Card[], x: number, w: number) => {
     let cy = y
     for (const c of cards) {
@@ -221,9 +232,9 @@ export function dashboardSvg(v: View, s: Settings): { source: string; alt: strin
     }
     return cy - GAP
   }
-  const bottom = Math.max(stack(colLeft, PAD, LEFT), stack(colRight, PAD + LEFT + GAP, RIGHT))
+  const bottom = Math.max(stack(colLeft, PAD, LEFT), colRight.length > 0 ? stack(colRight, PAD + LEFT + GAP, RIGHT) : 0)
   y = bottom + 30
-  out.push(text(PAD, y, 'Hours and money are estimates. /payback settings changes them.', { fill: C.muted, size: 12 }))
+  out.push(text(PAD, y, W < 600 ? 'All estimates. /payback settings changes them.' : 'Hours and money are estimates. /payback settings changes them.', { fill: C.muted, size: 12 }))
   const H = y + PAD - 6
 
   const alt =
