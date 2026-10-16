@@ -197,7 +197,7 @@ export function dashboardSvg(v: View, s: Settings, columns = 160): { source: str
   if ((d.tasks?.coding ?? 0) > 0) {
     const types = DEV_KINDS.filter(k => (d.dev?.[k] ?? 0) > 0).sort((a, b) => (d.dev?.[b] ?? 0) - (d.dev?.[a] ?? 0))
     if (types.length > 0) textRow('Task types', types.map(k => `${k[0]!.toUpperCase()}${k.slice(1)} ${d.dev?.[k]}`))
-    else rows.push({ label: 'Task types', lines: [[[s.judge ? 'not judged yet' : 'judge is off', C.muted]]] })
+    else rows.push({ label: 'Task types', lines: [[[s.judge ? 'not judged yet' : 'judge is off (/payback settings judge on)', C.muted]]] })
     rows.push({ label: 'Sizes', lines: [[[SIZES.map(z => `${z.toUpperCase()} ${d.sizes?.[z] ?? 0}`).join(' · '), C.muted]]] })
   }
   const hasCode = rows.length > 0 || (d.tasks?.coding ?? 0) > 0

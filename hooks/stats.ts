@@ -20,7 +20,7 @@ export const DEFAULTS: Settings = {
   currency: 'usd',
   minutes: { devops: 20, emails: 10, documents: 30, images: 20, research: 25, questions: 10, other: 10 },
   sizes: { s: 15, m: 45, l: 120 },
-  judge: true,
+  judge: false, // off until the person turns it on: it sends part of each coding request to a model
 }
 
 export function withDefaults(stored: unknown): Settings {

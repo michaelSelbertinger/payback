@@ -340,7 +340,7 @@ function listSettings(s: Settings): string {
     `  small      ${s.sizes.s} min per small coding task`,
     `  medium     ${s.sizes.m} min per medium coding task`,
     `  large      ${s.sizes.l} min per large coding task`,
-    `  judge      ${s.judge ? 'on' : 'off'} (Haiku 5.5 labels each coding task's type and size)`,
+    `  judge      ${s.judge ? 'on' : 'off'} (off by default; when on, Haiku 5.5 labels each coding task's type and size)`,
     'Change one with /payback settings <name> <value>, for example /payback settings rate 75.',
   ].join('\n')
 }
@@ -807,7 +807,7 @@ function drawPane(ui: Els, isTerminal: boolean, v: View, s: Settings, width: num
     if ((d.tasks?.coding ?? 0) > 0) {
       const types = DEV_KINDS.filter(k => (d.dev?.[k] ?? 0) > 0).sort((a, b) => (d.dev?.[b] ?? 0) - (d.dev?.[a] ?? 0))
       const typeText = types.map(k => `${k[0]!.toUpperCase()}${k.slice(1)} ${d.dev?.[k]}`).join(' · ')
-      rows.push(kv(c, 'code-types', inner, 'Task types', [[typeText || (s.judge ? 'not judged yet' : 'judge is off'), typeText ? C.text : C.muted]]))
+      rows.push(kv(c, 'code-types', inner, 'Task types', [[typeText || (s.judge ? 'not judged yet' : 'judge is off (/payback settings judge on)'), typeText ? C.text : C.muted]]))
       rows.push(kv(c, 'code-sizes', inner, 'Sizes', [[SIZES.map(z => `${z.toUpperCase()} ${d.sizes?.[z] ?? 0}`).join(' · '), C.muted]]))
     }
     return rows.length > 0 ? rows : [line(c, 'code-none', inner, [['No code work in this stretch.', C.muted]])]

@@ -138,9 +138,9 @@ Sessions started through the Claude Agent SDK (an assistant of your own, a scrip
 ## The Haiku judge
 
 > [!NOTE]
-> On by default, and the only part of Payback that calls a model. Turn it off with `/payback settings judge off`.
+> Off by default. It is the only part of Payback that calls a model. Turn it on with `/payback settings judge on`, and off again with `/payback settings judge off`.
 
-When the judge is on, each finished coding task gets one small call to Claude Haiku 5.5. It labels the task's type (feature, bugfix, refactor, tests, debug, docs, devops, review) and its size. The call is sent the first 1,500 characters of your request, the names and counts of the tools it used and the number of lines changed, and it uses your own Claude account or API key. Its tokens are shown in the pane under **Haiku judge**. With the judge off, sizes come from the lines changed alone.
+When the judge is on, each finished coding task gets one small call to Claude Haiku 5.5. It labels the task's type (feature, bugfix, refactor, tests, debug, docs, devops, review) and its size. The call is sent the first 1,500 characters of your request, the names and counts of the tools it used and the number of lines changed, and it uses your own Claude account or API key. Its tokens are shown in the pane under **Haiku judge**. With the judge off, which is how Payback starts, sizes come from the lines changed alone and the pane's Task types row says the judge is off.
 
 ## Importing your history
 
@@ -186,13 +186,13 @@ A mod runs inside Claude Code with your permissions, so here is exactly what Pay
 
 - **Your session transcripts** in `~/.claude/projects`, read only when you run `/payback import`, and only to count. Large ones are read with `cmd /c type` (Windows) or `cat`.
 - **A few environment variables**: `CLAUDE_CODE_ENTRYPOINT`, `CLAUDE_CONFIG_DIR`, `HOME`, `USERPROFILE` and `OS`.
-- **Claude Haiku 5.5**, for the judge described above. It is the only model call, and it can be turned off.
+- **Claude Haiku 5.5**, for the judge described above. It is the only model call, and it stays off unless you turn it on.
 - **The mod's own store**, where the counts live. Payback makes no network requests of its own.
 
 Run `claude plugin validate` on a clone of this repository to see for yourself: its `hooks:` and `calls:` lines list the events Payback handles and what it asks Claude Code to do.
 
 > [!NOTE]
-> All counts stay on your machine. Nothing is sent anywhere, except the Haiku judge's calls, which go to Anthropic through your own Claude Code session. Payback sees your prompts and tool calls in order to count them, and keeps none of their text. Read the [privacy policy](PRIVACY.md).
+> All counts stay on your machine. Out of the box nothing is sent anywhere. If you turn the Haiku judge on, its calls go to Anthropic through your own Claude Code session. Payback sees your prompts and tool calls in order to count them, and keeps none of their text. Read the [privacy policy](PRIVACY.md).
 
 ## Support
 

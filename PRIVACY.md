@@ -22,7 +22,7 @@ It does **not** store prompt text, Claude's replies, file contents, file paths, 
 
 Payback makes no network requests of its own and has no third-party services.
 
-There is one thing that goes further than your machine, and you can turn it off. When the **Haiku judge** is on (`/payback settings judge on`), each time a coding task finishes, Payback asks Claude Haiku 5.5 to label it. That request is sent through your own Claude Code session, on your own Claude account or API key, to Anthropic, and contains the first 1,500 characters of your request, the names and counts of the tools used, and the number of lines and files changed. The reply is two words. Anthropic handles that request under the terms and privacy policy that apply to your use of Claude. Turn the judge off with `/payback settings judge off` and nothing leaves your machine at all.
+There is one thing that can go further than your machine, and it is **off by default**. If you turn the **Haiku judge** on (`/payback settings judge on`), each time a coding task finishes, Payback asks Claude Haiku 5.5 to label it. That request is sent through your own Claude Code session, on your own Claude account or API key, to Anthropic, and contains the first 1,500 characters of your request, the names and counts of the tools used, and the number of lines and files changed. The reply is two words. Anthropic handles that request under the terms and privacy policy that apply to your use of Claude. The judge stays off until you turn it on, and `/payback settings judge off` turns it off again. With the judge off, which is how Payback starts, nothing leaves your machine at all.
 
 The judge is never run on imported history.
 

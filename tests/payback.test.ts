@@ -125,8 +125,8 @@ const usage = (model: string) => ({ model, input_tokens: 10, output_tokens: 20, 
 const finish = (turnId: string, extra: object = {}) =>
   ({ turnId, answer: 'done', durationMs: 1000, isAborted: false, reason: 'answer', usage: usage('claude-opus-5-5'), ...extra }) as const
 
-test('counts only typed prompts that finish, and judges coding tasks with Haiku', async ($, on) => {
-  const store = memStore(on)
+test('counts only typed prompts that finish, and judges coding tasks with Haiku once the judge is on', async ($, on) => {
+  const store = memStore(on, { settings: { judge: true } })
   const clock = mock.clock(on, { now: NOW })
   bottoms(on)
   const judged: string[] = []
@@ -169,7 +169,7 @@ test('counts only typed prompts that finish, and judges coding tasks with Haiku'
 })
 
 test('a failed judge keeps the lines-based size and counts the failure', async ($, on) => {
-  const store = memStore(on)
+  const store = memStore(on, { settings: { judge: true } })
   const clock = mock.clock(on, { now: NOW })
   bottoms(on)
   on('model.complete', () => ({ value: { isAnswered: false as const, reason: 'api-error' as const, status: 529, error: 'overloaded' as const, usage: ZERO } }))
@@ -182,6 +182,37 @@ test('a failed judge keeps the lines-based size and counts the failure', async (
   expect(day.sizes).toEqual({ s: 1 })
   expect(day.dev).toBeUndefined()
   expect(day.n).toMatchObject({ judgeCalls: 1, judgeFails: 1 })
+})
+
+test('the judge is off by default: no model call, sizes from the lines; /payback settings judge on turns it on', async ($, on) => {
+  const store = memStore(on)
+  const clock = mock.clock(on, { now: NOW })
+  bottoms(on)
+  const judged: string[] = []
+  on('model.complete', ($, e) => {
+    judged.push(e.model)
+    return { value: { isAnswered: true as const, text: 'bugfix M', usage: { ...ZERO, input_tokens: 300, output_tokens: 3 } } }
+  })
+  const task = async (id: string) => {
+    await $.prompt.submit({ text: `edit ${id}`, wait: false, origin: { kind: 'composer' } })
+    await $.turn.start({ text: `edit ${id}`, turnId: id })
+    await $.tool.call({ tool: 'Edit', file_path: 'src/a.ts', old_string: 'c', new_string: 'a\nb' })
+    await $.turn.complete(finish(id))
+    await clock.advance(100)
+  }
+  const day = () => (store.get('days:2026') as Record<string, Day>)['2026-10-16']!
+
+  expect((await $.command.run({ command: 'payback', args: 'settings', ...RUN })).text).toContain('judge      off')
+  await task('t1')
+  expect(judged).toEqual([]) // nothing was sent to a model
+  expect(day().sizes).toEqual({ s: 1 })
+  expect(day().n?.judgeCalls).toBeUndefined()
+  expect(day().dev).toBeUndefined()
+
+  expect((await $.command.run({ command: 'payback', args: 'settings judge on', ...RUN })).text).toBe('The Haiku judge is on.')
+  await task('t2')
+  expect(judged).toEqual(['claude-haiku-5-5'])
+  expect(day().n).toMatchObject({ judgeCalls: 1 })
 })
 
 test('settings list and change', async ($, on) => {
