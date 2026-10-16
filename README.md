@@ -57,6 +57,14 @@ In the desktop app, where `/plugin` does not run: click **+** next to the prompt
 > [!NOTE]
 > Payback is a [mod](https://code.claude.com/docs/en/plugins/mods/overview): a plugin that changes how Claude Code looks and behaves. Mods need Claude Code **2.1.287 or later** in the terminal (2.1.286 in the desktop app). Payback was built and tested on **2.1.299**, and the mods API is young enough to change between releases.
 
+## Try it
+
+Three things to type once it is installed:
+
+1. `/payback` opens the pane. Pick Today, Week, Month or Year, or switch between $ and €.
+2. `/payback settings currency eur` shows money in euro; `/payback settings rate 75` sets your hourly rate.
+3. `/payback import 30d` previews the last 30 days of your past sessions, and imports them when you press **Import**.
+
 ## See it
 
 <p align="center">
@@ -184,7 +192,11 @@ A mod runs inside Claude Code with your permissions, so here is exactly what Pay
 Run `claude plugin validate` on a clone of this repository to see for yourself: its `hooks:` and `calls:` lines list the events Payback handles and what it asks Claude Code to do.
 
 > [!NOTE]
-> All counts stay on your machine. Nothing is sent anywhere, except the Haiku judge's calls, which go to Anthropic through your own Claude Code session.
+> All counts stay on your machine. Nothing is sent anywhere, except the Haiku judge's calls, which go to Anthropic through your own Claude Code session. Payback sees your prompts and tool calls in order to count them, and keeps none of their text. Read the [privacy policy](PRIVACY.md).
+
+## Support
+
+Bug reports, questions and ideas: [open an issue](https://github.com/michaelSelbertinger/payback/issues). For security concerns, write to michael.selbertinger@web.de. The full [privacy policy](PRIVACY.md) is a short read.
 
 ## Development
 
