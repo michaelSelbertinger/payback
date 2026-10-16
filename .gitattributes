@@ -1,4 +1,0 @@
-* text=auto eol=lf
-docs/* linguist-documentation
-*.svg text eol=lf
-*.png binary
