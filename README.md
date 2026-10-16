@@ -37,10 +37,17 @@ Then type `/payback`. Want your past sessions in the report too? Run `/payback i
 
 <br>
 
-From a shell:
+From a shell, with Claude Code 2.1.292 or later:
 
 ```
 claude plugin install payback --marketplace michaelSelbertinger/payback
+```
+
+On an older version, add the marketplace first and then install:
+
+```
+claude plugin marketplace add michaelSelbertinger/payback
+claude plugin install payback@payback
 ```
 
 In the desktop app, where `/plugin` does not run: click **+** next to the prompt box, then **Plugins**, **Add marketplace** with `michaelSelbertinger/payback`, then **Add plugin**.
